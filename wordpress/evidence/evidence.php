@@ -8,7 +8,6 @@ Description: Zaevidování členů do aplikace a jejich uložení
 
 //register creating database
 register_activation_hook( __FILE__, 'kckevidence_create_db' );
-register_activation_hook( __FILE__, 'kckevidence_install_data' );
 
 //create database 
 function kckevidence_create_db() {
