@@ -76,7 +76,9 @@ class kckevidence_widget extends WP_Widget {
     //create seats area
     echo __( sprintf('<div id="kckevidence_evidence">'), 'kckevidence_widget_domain' ); 
     
-    $htmlContent = "Tady bude evidence";
+    $new_member = new Member() ; 
+
+    $htmlContent = $new_member.renderInputForm() ;
     echo __( $htmlContent, 'kckevidence_widget_domain' ); 
     
     //end of seats area
@@ -118,5 +120,64 @@ class kckevidence_widget extends WP_Widget {
     add_action( 'widgets_init', 'kckevidence_load_widget' );
     
 // podle entity modelu dodefinovat databázi, musí být vazby mezi skupinami, alespoň rozmyslet
+// ---
+// informace o členovi, 
+class Member {
+	protected $_id;
+	protected $_first_name;
+	protected $_second_name;
+	protected $_email;
+	protected $_phone;
 
+	public function __construct($usr) {
+		$this->_id = $usr->id;
+		$this->_first_name = $usr->first_name;
+		$this->_second_name = $usr->second_name;
+		$this->_email = $usr->email;
+		$this->_phone = $usr->phone;
+	}
+
+	public function __construct() {
+		$this->_id = '';
+		$this->_first_name = '';
+		$this->_second_name ='';
+		$this->_email = '';
+		$this->_phone = '';
+	}
+
+
+	public function getId() {
+		return $this->_id;
+	}
+
+	public function getFirstName() {
+		return $this->_first_name;
+	}
+
+	public function getSecondName() {
+		return $this->_second_name;
+	}
+
+	public function getEmail() {
+		return $this->_email;
+	}
+
+	public function getPhone() {
+		return $this->_phone;
+	}
+
+	function renderInputForm(){
+        $name = '' ;
+        $secondname = '' ;
+        
+	//dialog new booking
+	$html .= sprintf('<div class="newbooking">
+					  <input name="firstName" placeholder="Jméno žáka/ů" type="text" value="%1$s">
+					  <input name="secondName" placeholder="Příjmení žáka/ů" type="text" value="%2$s">
+					  </div>', $name, $secondname); 
+
+        return $html
+    }
+
+}
 ?>
