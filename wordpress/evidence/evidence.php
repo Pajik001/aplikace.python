@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Evidence člemů
+Plugin Name: Evidence členů
 Description: Zaevidování členů do aplikace a jejich uložení
 */
 /* Start Adding Functions Below this Line */
@@ -27,6 +27,28 @@ function kckevidence_create_db() {
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql_table_1 );
 }
+// register jquery and style on initialization
+add_action('init', 'kck_register_script');
+
+function kck_register_script() {
+    wp_register_script( 'kck_script', plugins_url('/js/fe.js', __FILE__), array('jquery'), '0.0.2' );
+	wp_localize_script('kck_script', 'ipAjaxVar', array('ajaxurl' => admin_url('admin-ajax.php')));
+
+    wp_register_style( '', plugins_url('/css/style.css', __FILE__), false, '0.0.2', 'all');
+}
+
+// use the registered jquery and style above
+add_action('wp_enqueue_scripts', 'kck_enqueue_style');
+
+function kck_enqueue_style(){
+   wp_enqueue_script('kck_script');
+   
+   wp_enqueue_script('jquery');
+   wp_enqueue_script('jquery-ui-draggable');
+   wp_enqueue_script('jquery-ui-resizable');
+ 
+   wp_enqueue_style( 'kck_style' );
+}
 
 //create new member
 function create_member($name, $surname) {
@@ -46,6 +68,7 @@ function create_member($name, $surname) {
 
 	return  $memberid;
 }
+
 // Creating the widget 
 class kckevidence_widget extends WP_Widget {
 
@@ -76,9 +99,10 @@ class kckevidence_widget extends WP_Widget {
     //create seats area
     echo __( sprintf('<div id="kckevidence_evidence">'), 'kckevidence_widget_domain' ); 
     
-    $new_member = new Member() ; 
+    $new_member = new Member(); 
 
-    $htmlContent = $new_member.renderInputForm() ;
+    $htmlContent = $new_member->renderInputForm();
+
     echo __( $htmlContent, 'kckevidence_widget_domain' ); 
     
     //end of seats area
@@ -111,8 +135,17 @@ class kckevidence_widget extends WP_Widget {
     $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
     return $instance;
     }
-    } // Class ssa_widget ends here
-    
+
+} // Class ssa_widget ends here
+
+    //create new member 
+    add_action('wp_ajax_nopriv_kck_create_member', 'kck_create_member');
+    add_action('wp_ajax_kck_create_member', 'kck_create_member');
+
+    function kck_create_member() {
+        global $wpdb;
+    }
+
     // Register and load the widget
     function kckevidence_load_widget() {
         register_widget( 'kckevidence_widget' );
@@ -129,14 +162,6 @@ class Member {
 	protected $_email;
 	protected $_phone;
 
-	public function __construct($usr) {
-		$this->_id = $usr->id;
-		$this->_first_name = $usr->first_name;
-		$this->_second_name = $usr->second_name;
-		$this->_email = $usr->email;
-		$this->_phone = $usr->phone;
-	}
-
 	public function __construct() {
 		$this->_id = '';
 		$this->_first_name = '';
@@ -144,7 +169,6 @@ class Member {
 		$this->_email = '';
 		$this->_phone = '';
 	}
-
 
 	public function getId() {
 		return $this->_id;
@@ -166,18 +190,20 @@ class Member {
 		return $this->_phone;
 	}
 
-	function renderInputForm(){
+	public function renderInputForm() {
         $name = '' ;
         $secondname = '' ;
         
-	//dialog new booking
-	$html .= sprintf('<div class="newbooking">
-					  <input name="firstName" placeholder="Jméno žáka/ů" type="text" value="%1$s">
-					  <input name="secondName" placeholder="Příjmení žáka/ů" type="text" value="%2$s">
-					  </div>', $name, $secondname); 
+        $html = '';
 
-        return $html
+        //dialog new booking
+	    $html .= sprintf('<div class="newMember">
+    					  <input name="firstName" placeholder="Jméno člena" type="text" value="%1$s">
+	    				  <input name="secondName" placeholder="Příjmení člena" type="text" value="%2$s">
+					      <button class="saveMember">Uložit</button>
+					     </div>', $name, $secondname); 
+
+        return $html;
     }
-
 }
 ?>
