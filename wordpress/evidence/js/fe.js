@@ -1,6 +1,6 @@
 jQuery(document).ready(function() {
    
-    initLsgReservation();
+    initkckevidence();
 
 });
 
