@@ -69,6 +69,16 @@ function create_member($name, $surname) {
 	return  $memberid;
 }
 
+// register jquery and style on initialization
+add_action('init', 'kck_register_script');
+
+function kck_register_script() {
+    wp_register_script( 'kck_script', plugins_url('/js/utils.js', __FILE__), array('jquery'), '0.0.2' );
+	wp_localize_script('kck_script', 'ipAjaxVar', array('ajaxurl' => admin_url('admin-ajax.php')));
+
+    wp_register_style( 'kck_style', plugins_url('/css/style.css', __FILE__), false, '0.0.2', 'all');
+}
+
 // Creating the widget 
 class kckevidence_widget extends WP_Widget {
 
