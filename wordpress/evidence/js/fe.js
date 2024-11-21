@@ -15,17 +15,14 @@ function initkckevidence() {
 
             jQuery.ajax({
                 method: 'post',
-                url: ipAjaxVar.ajaxurl,
+                url: ipAjaxVar.ajaxurl, 
                 data: {
-                    action: 'kck_create_booking',
-                    userId:$uId,
+                    action: 'kck_create_member',
                     firstName: $fname,
                     secondName: $sname,
-                    slots: JSON.stringify($slotList)
                 }
             }).done(function(result) {
-                jQuery("#kck-reservation").html(result);
-                initKCKReservation();
+                jQuery("#kck-evidence").html(result);
             });
         });
 
