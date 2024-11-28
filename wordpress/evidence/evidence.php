@@ -20,6 +20,7 @@ function kckevidence_create_db() {
 		time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 		member_name varchar(50) NOT NULL,
 		member_sur varchar(50) NOT NULL,
+        member_email varchar(50) NOT NULL,
 		UNIQUE KEY id (id)
 	) $charset_collate;";
 
@@ -51,7 +52,7 @@ function kck_enqueue_style(){
 }
 
 //create new member
-function create_member($name, $surname) {
+function create_member($name, $surname, $email) {
 	global $wpdb;
 
 	$table1_name = $wpdb->prefix . 'kckevidence_members';
@@ -62,6 +63,7 @@ function create_member($name, $surname) {
 			'time' => current_time( 'mysql' ), 
 			'member_name' => $name,
 			'member_sur' => $surname, 
+            'member_email' => $email,
 		) 
 	);
     $memberid = $wpdb->insert_id;
@@ -145,6 +147,13 @@ class kckevidence_widget extends WP_Widget {
 
     function kck_create_member() {
         global $wpdb;
+        
+        $fname = $_POST['firstName']; 
+        $sname = $_POST['secondName'];
+        $email = $_POST['email'];
+
+        $uId = create_member($fname , $sname, $email);
+
     }
 
     // Register and load the widget
@@ -194,15 +203,16 @@ class Member {
 	public function renderInputForm() {
         $name = '' ;
         $secondname = '' ;
-        
+        $email = '' ;
         $html = '';
 
         //dialog new booking
 	    $html .= sprintf('<div class="newMember">
     					  <input name="firstName" placeholder="Jméno člena" type="text" value="%1$s">
 	    				  <input name="secondName" placeholder="Příjmení člena" type="text" value="%2$s">
+                          <input name="email" placeholder="email" type="text" value="%3$s">
 					      <button class="saveMember">Uložit</button>
-					     </div>', $name, $secondname); 
+					     </div>', $name, $secondname, $email); 
 
         return $html;
     }
