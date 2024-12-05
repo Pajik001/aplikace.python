@@ -96,7 +96,7 @@ class kckevidence_widget extends WP_Widget {
     
     // before and after widget arguments are defined by themes
     echo $args['before_widget'];
-    if ( ! empty( $title ) )
+    if ( ! empty( $title ) ) 
     echo $args['before_title'] . $title . $args['after_title'];
     
     //create seats area
@@ -105,6 +105,20 @@ class kckevidence_widget extends WP_Widget {
     $new_member = new Member(); 
 
     $htmlContent = $new_member->renderInputForm();
+    
+    $table1_name = $wpdb->prefix . 'kckevidence_members';
+    
+    $members = $wpdb->get_results("SELECT * FROM $table1_name");
+
+	$htmlContent .= sprintf('<h2>Seznam rezervací</h2>');
+
+	//render teachers
+	foreach ($members as $mem) {
+	
+		$objMember = new Member($mem);
+	
+		$htmlContent .= $objMember->renderMember();
+	}  
 
     echo __( $htmlContent, 'kckevidence_widget_domain' ); 
     
@@ -150,9 +164,9 @@ class kckevidence_widget extends WP_Widget {
         
         $fname = $_POST['firstName']; 
         $sname = $_POST['secondName'];
-        $email = $_POST['email'];
+        $mail = $_POST['email'];
 
-        $uId = create_member($fname , $sname, $email);
+        $uId = create_member($fname , $sname, $mail);
 
     }
 
@@ -180,25 +194,47 @@ class Member {
 		$this->_phone = '';
 	}
 
+    public static function withRow( array $row ) {
+        $instance = new self();
+        $instance-> setFirstname( $row -> member_name );
+        return $instance;
+
+    }
 	public function getId() {
 		return $this->_id;
+	}
+
+    public function setId(id) {
+        $this->_id = id;
 	}
 
 	public function getFirstName() {
 		return $this->_first_name;
 	}
 
+    public function setFirstName(name) {
+        $this->_name = name;
+    }
+
 	public function getSecondName() {
 		return $this->_second_name;
 	}
 
+    public function setSecondname(secondname) {
+        $this ->_second_name = secondname;
+    }
 	public function getEmail() {
 		return $this->_email;
 	}
-
+    public function setEmail(email){
+        $this ->_email = email;
+    }
 	public function getPhone() {
 		return $this->_phone;
 	}
+    public function setPhone(phone) {
+        $this -> _phone = phone;
+    }
 
 	public function renderInputForm() {
         $name = '' ;
@@ -215,6 +251,17 @@ class Member {
 					     </div>', $name, $secondname, $email); 
 
         return $html;
+    }
+    public function renderMember() {
+    $html = '';
+        $html .= sprintf('<div class="memberItem"> 
+        <table> 
+        <tr>
+        <td> %1$s 
+        </td>
+        </tr> 
+        </table> 
+        </div> ', $name); 
     }
 }
 ?>
