@@ -8,6 +8,7 @@ Description: Zaevidování členů do aplikace a jejich uložení
 
 //register creating database
 register_activation_hook( __FILE__, 'kckevidence_create_db' );
+register_uninstall_hook(__FILE__, 'kck_delete_database_tables');
 
 //create database 
 function kckevidence_create_db() {
@@ -28,6 +29,19 @@ function kckevidence_create_db() {
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 	dbDelta( $sql_table_1 );
 }
+
+//Plugin uninstall database
+function kck_delete_database_tables(){
+	global $wpdb;
+	$tableArray = [   
+		$wpdb->prefix . 'kckevidence_members'
+];
+
+	foreach ($tableArray as $tablename) {
+		$wpdb->query("DROP TABLE IF EXISTS $tablename");
+	}
+}
+
 // register jquery and style on initialization
 add_action('init', 'kck_register_script');
 
@@ -57,6 +71,7 @@ function create_member($name, $surname, $email) {
 
 	$table1_name = $wpdb->prefix . 'kckevidence_members';
 
+    echo ('Test');
 	$wpdb->insert( 
 		$table1_name, 
 		array( 
