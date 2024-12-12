@@ -91,7 +91,8 @@ class kckevidence_widget extends WP_Widget {
     // Creating widget front-end
     // This is where the action happens
     public function widget( $args, $instance ) {
-    
+    global $wpdb;
+
     $title = apply_filters( 'widget_title', $instance['title'] );
     
     // before and after widget arguments are defined by themes
@@ -110,12 +111,12 @@ class kckevidence_widget extends WP_Widget {
     
     $members = $wpdb->get_results("SELECT * FROM $table1_name");
 
-	$htmlContent .= sprintf('<h2>Seznam rezervací</h2>');
+	$htmlContent .= sprintf('<h2>Seznam členů</h2>');
 
-	//render teachers
+	//render members 
 	foreach ($members as $mem) {
 	
-		$objMember = new Member($mem);
+		$objMember = Member:: withRow ($mem);
 	
 		$htmlContent .= $objMember->renderMember();
 	}  
@@ -204,36 +205,36 @@ class Member {
 		return $this->_id;
 	}
 
-    public function setId(id) {
-        $this->_id = id;
+    public function setId($id) {
+        $this->_id = $id;
 	}
 
 	public function getFirstName() {
 		return $this->_first_name;
 	}
 
-    public function setFirstName(name) {
-        $this->_name = name;
+    public function setFirstName($name) {
+        $this->_name = $name;
     }
 
 	public function getSecondName() {
 		return $this->_second_name;
 	}
 
-    public function setSecondname(secondname) {
-        $this ->_second_name = secondname;
+    public function setSecondname($secondname) {
+        $this ->_second_name = $secondname;
     }
 	public function getEmail() {
 		return $this->_email;
 	}
-    public function setEmail(email){
-        $this ->_email = email;
+    public function setEmail($email){
+        $this ->_email = $email;
     }
 	public function getPhone() {
 		return $this->_phone;
 	}
-    public function setPhone(phone) {
-        $this -> _phone = phone;
+    public function setPhone($phone) {
+        $this -> _phone = $phone;
     }
 
 	public function renderInputForm() {
