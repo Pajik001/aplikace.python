@@ -42,6 +42,9 @@ function kck_delete_database_tables(){
 	}
 }
 
+register_uninstall_hook(__FILE__, 'kck_delete_database_tables');
+
+
 // register jquery and style on initialization
 add_action('init', 'kck_register_script');
 
@@ -210,7 +213,7 @@ class Member {
 		$this->_phone = '';
 	}
 
-    public static function withRow( array $row ) {
+    public static function withRow( $row ) {
         $instance = new self();
         $instance-> setFirstname( $row -> member_name );
         return $instance;
@@ -229,7 +232,7 @@ class Member {
 	}
 
     public function setFirstName($name) {
-        $this->_name = $name;
+        $this->_first_name = $name;
     }
 
 	public function getSecondName() {
@@ -269,7 +272,8 @@ class Member {
         return $html;
     }
     public function renderMember() {
-    $html = '';
+
+        $html = '';
         $html .= sprintf('<div class="memberItem"> 
         <table> 
         <tr>
@@ -277,7 +281,10 @@ class Member {
         </td>
         </tr> 
         </table> 
-        </div> ', $name); 
+        </div> ', $this -> _first_name); 
+
+        return $html;
     }
+
 }
 ?>
