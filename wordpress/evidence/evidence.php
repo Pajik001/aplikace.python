@@ -42,9 +42,6 @@ function kck_delete_database_tables(){
 	}
 }
 
-register_uninstall_hook(__FILE__, 'kck_delete_database_tables');
-
-
 // register jquery and style on initialization
 add_action('init', 'kck_register_script');
 
@@ -184,6 +181,7 @@ class kckevidence_widget extends WP_Widget {
         $fname = $_POST['firstName']; 
         $sname = $_POST['secondName'];
         $mail = $_POST['email'];
+    
 
         $uId = create_member($fname , $sname, $mail);
 
@@ -213,9 +211,14 @@ class Member {
 		$this->_phone = '';
 	}
 
-    public static function withRow( $row ) {
+    public static function withRow(  $row ) {
         $instance = new self();
         $instance-> setFirstname( $row -> member_name );
+        $instance-> setSecondname( $row -> member_sur );
+        $instance-> setEmail( $row -> member_email );
+        $instance-> setId( $row -> id );
+        $instance-> setPhone( $row -> member_phone ); 
+        
         return $instance;
 
     }
@@ -232,7 +235,7 @@ class Member {
 	}
 
     public function setFirstName($name) {
-        $this->_first_name = $name;
+        $this->first_name = $name;
     }
 
 	public function getSecondName() {
@@ -272,8 +275,7 @@ class Member {
         return $html;
     }
     public function renderMember() {
-
-        $html = '';
+    $html = '';
         $html .= sprintf('<div class="memberItem"> 
         <table> 
         <tr>
@@ -281,10 +283,8 @@ class Member {
         </td>
         </tr> 
         </table> 
-        </div> ', $this -> _first_name); 
-
-        return $html;
+        </div> ', $this -> $_first_name); 
     }
-
+    render $html; 
 }
 ?>
