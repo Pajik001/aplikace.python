@@ -11,6 +11,8 @@ function initkckevidence() {
         var $sname = jQuery('input[name="secondName"]').val();
         var $email = jQuery('input[name="email"]').val();
         var $phone = jQuery('input[name="phone"]').val();
+        var $birthDate = jQuery('input[name="birthDate"]').val();
+        var $weight = jQuery('input[name="weight"]').val();
 
         jQuery.ajax({
             method: 'post',
@@ -20,7 +22,9 @@ function initkckevidence() {
                 firstName: $fname,
                 secondName: $sname,
                 email: $email,
-                phone: $phone
+                phone: $phone,
+                birthDate: $birthDate,
+                weight: $weight
             }
         }).done(function(response) {
             if (response.success) {

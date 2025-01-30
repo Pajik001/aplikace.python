@@ -10,6 +10,7 @@ register_activation_hook(__FILE__, 'kckevidence_create_db');
 register_uninstall_hook(__FILE__, 'kck_delete_database_tables');
 
 //create database 
+# dodělat do databáze věk a váhu
 function kckevidence_create_db() {
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
@@ -21,6 +22,9 @@ function kckevidence_create_db() {
         member_sur varchar(50) NOT NULL,
         member_email varchar(50) NOT NULL,
         member_phone varchar(20) NOT NULL,
+        birth_date date NOT NULL,
+        weight int(3) NOT NULL,
+        category_id mediumint(9),
         UNIQUE KEY id (id)
     ) $charset_collate;";
 
@@ -99,10 +103,13 @@ function kck_enqueue_style() {
 }
 
 //create new member
-function create_member($name, $surname, $email, $phone) {
+function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
     global $wpdb;
 
     $table1_name = $wpdb->prefix . 'kckevidence_members';
+
+    // Determine category based on age and weight
+    $category_id = determine_category($birth_date, $weight);
 
     $wpdb->insert(
         $table1_name,
@@ -111,12 +118,50 @@ function create_member($name, $surname, $email, $phone) {
             'member_name' => $name,
             'member_sur' => $surname,
             'member_email' => $email,
-            'member_phone' => $phone
+            'member_phone' => $phone,
+            'birth_date' => $birth_date,
+            'weight' => $weight,
+            'category_id' => $category_id
         )
     );
     $memberid = $wpdb->insert_id;
 
     return $memberid;
+}
+
+# název kategorie, udat to jako čísla, zkoumat jestli se vejde do dané kategorie
+function determine_category($birth_date, $weight) {
+    global $wpdb;
+
+    $age = date_diff(date_create($birth_date), date_create('today'))->y;
+    $table2_name = $wpdb->prefix . 'kckevidence_categories';
+
+    $categories = $wpdb->get_results("SELECT * FROM $table2_name WHERE age >= $age ORDER BY age ASC");
+
+    foreach ($categories as $category) {
+        $weights = explode(',', $category->weight);
+        foreach ($weights as $w) {
+            $w = trim($w);
+            if ($w[0] == '-') {
+                if ($weight <= intval(substr($w, 1))) {
+                    return $category->id;
+                }
+            } elseif ($w[0] == '+') {
+                if ($weight >= intval(substr($w, 1))) {
+                    return $category->id;
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+function get_category_name($category_id) {
+    global $wpdb;
+    $table2_name = $wpdb->prefix . 'kckevidence_categories';
+    $category = $wpdb->get_row($wpdb->prepare("SELECT category_name FROM $table2_name WHERE id = %d", $category_id));
+    return $category ? $category->category_name : 'Unknown';
 }
 
 //create new member via AJAX
@@ -128,9 +173,11 @@ function kck_create_member() {
     $sname = isset($_POST['secondName']) ? sanitize_text_field($_POST['secondName']) : '';
     $mail = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
     $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
+    $birth_date = isset($_POST['birthDate']) ? sanitize_text_field($_POST['birthDate']) : '';
+    $weight = isset($_POST['weight']) ? intval($_POST['weight']) : 0;
 
-    if (!empty($fname) && !empty($sname) && !empty($mail) && !empty($phone)) {
-        $uId = create_member($fname, $sname, $mail, $phone);
+    if (!empty($fname) && !empty($sname) && !empty($mail) && !empty($phone) && !empty($birth_date) && !empty($weight)) {
+        $uId = create_member($fname, $sname, $mail, $phone, $birth_date, $weight);
         if ($uId) {
             wp_send_json_success(array('message' => 'Member created successfully', 'member_id' => $uId));
         } else {
@@ -282,6 +329,9 @@ class Member {
     protected $_second_name;
     protected $_email;
     protected $_phone;
+    protected $_birth_date;
+    protected $_weight;
+    protected $_category_id;
 
     public function __construct() {
         $this->_id = '';
@@ -289,6 +339,9 @@ class Member {
         $this->_second_name = '';
         $this->_email = '';
         $this->_phone = '';
+        $this->_birth_date = '';
+        $this->_weight = '';
+        $this->_category_id = '';
     }
 
     public static function withRow($row) {
@@ -298,6 +351,9 @@ class Member {
         $instance->setEmail($row->member_email);
         $instance->setId($row->id);
         $instance->setPhone($row->member_phone);
+        $instance->setBirthDate(isset($row->birth_date) ? $row->birth_date : null);
+        $instance->setWeight(isset($row->weight) ? $row->weight : null);
+        $instance->setCategoryId(isset($row->category_id) ? $row->category_id : null);
 
         return $instance;
     }
@@ -342,11 +398,37 @@ class Member {
         $this->_phone = $phone;
     }
 
+    public function getBirthDate() {
+        return $this->_birth_date;
+    }
+
+    public function setBirthDate($birth_date) {
+        $this->_birth_date = $birth_date;
+    }
+
+    public function getWeight() {
+        return $this->_weight;
+    }
+
+    public function setWeight($weight) {
+        $this->_weight = $weight;
+    }
+
+    public function getCategoryId() {
+        return $this->_category_id;
+    }
+
+    public function setCategoryId($category_id) {
+        $this->_category_id = $category_id;
+    }
+
     public function renderInputForm() {
         $name = '';
         $secondname = '';
         $email = '';
         $phone = '';
+        $birth_date = '';
+        $weight = '';
         $id = '';
         $html = '';
 
@@ -356,24 +438,31 @@ class Member {
                           <input name="secondName" placeholder="Příjmení člena" type="text" value="%2$s">
                           <input name="email" placeholder="email" type="text" value="%3$s">
                           <input name="phone" placeholder="telefon" type="text" value="%4$s">
+                          <input name="birthDate" placeholder="Datum narození" type="date" value="%5$s">
+                          <input name="weight" placeholder="Váha" type="number" value="%6$s">
                           <button class="saveMember">Uložit</button>
-                         </div>', $name, $secondname, $email, $phone);
+                         </div>', $name, $secondname, $email, $phone, $birth_date, $weight);
 
         return $html;
     }
 
     public function renderMember() {
+        $category_name = get_category_name($this->_category_id);
         $html = '';
         $html .= sprintf('<div class="memberItem"> 
         <table> 
         <tr>
-        <td> %1$s 
-        </td>
+        <td> Jméno: %1$s </td>
+        <td> Příjmení: %2$s </td>
+        <td> Email: %3$s </td>
+        <td> Telefon: %4$s </td>
+        <td> Datum narození: %5$s </td>
+        <td> Váha: %6$s kg </td>
+        <td> Kategorie: %7$s </td>
         </tr> 
         </table> 
-        </div> ', $this->_first_name);
+        </div> ', $this->_first_name, $this->_second_name, $this->_email, $this->_phone, $this->_birth_date, $this->_weight, $category_name);
 
         return $html;
     }
 }
-?>
