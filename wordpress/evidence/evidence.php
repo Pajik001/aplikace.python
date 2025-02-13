@@ -105,12 +105,14 @@ function kck_enqueue_style() {
 //create new member
 function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
     global $wpdb;
+    console.log('create_member');
 
     $table1_name = $wpdb->prefix . 'kckevidence_members';
 
     // Determine category based on age and weight
-    $category_id = determine_category($birth_date, $weight);
+    $category_id = 1; //determine_category($birth_date, $weight);
 
+    try {
     $wpdb->insert(
         $table1_name,
         array(
@@ -124,12 +126,14 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
             'category_id' => $category_id
         )
     );
+    } catch (Exception $e) {
+        console.log($e->getMessage());
+    }
     $memberid = $wpdb->insert_id;
-
+    console.log($memberid);
     return $memberid;
 }
 
-# název kategorie, udat to jako čísla, zkoumat jestli se vejde do dané kategorie
 function determine_category($birth_date, $weight) {
     global $wpdb;
 
@@ -148,7 +152,7 @@ function determine_category($birth_date, $weight) {
                 }
             } elseif ($w[0] == '+') {
                 if ($weight >= intval(substr($w, 1))) {
-                    return $category->id;
+                    return $category->id; 
                 }
             }
         }
@@ -171,7 +175,7 @@ add_action('wp_ajax_kck_create_member', 'kck_create_member');
 function kck_create_member() {
     $fname = isset($_POST['firstName']) ? sanitize_text_field($_POST['firstName']) : '';
     $sname = isset($_POST['secondName']) ? sanitize_text_field($_POST['secondName']) : '';
-    $mail = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    $mail = isset($_POST['email']) ? sanitize_text_field($_POST['email']) : '';
     $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
     $birth_date = isset($_POST['birthDate']) ? sanitize_text_field($_POST['birthDate']) : '';
     $weight = isset($_POST['weight']) ? intval($_POST['weight']) : 0;
@@ -184,7 +188,7 @@ function kck_create_member() {
             wp_send_json_error(array('message' => 'Failed to create member'));
         }
     } else {
-        wp_send_json_error(array('message' => 'Missing required fields'));
+        wp_send_json_error(array('message' => 'Missing required fields ' . $fname . ',' . $sname . ',' . $mail . ',' . $phone . ',' . $birth_date . ',' . $weight));
     }
     wp_die();
 }
