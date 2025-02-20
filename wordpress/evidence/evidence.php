@@ -10,7 +10,6 @@ register_activation_hook(__FILE__, 'kckevidence_create_db');
 register_uninstall_hook(__FILE__, 'kck_delete_database_tables');
 
 //create database 
-# dodělat do databáze věk a váhu
 function kckevidence_create_db() {
     global $wpdb;
     $charset_collate = $wpdb->get_charset_collate();
@@ -109,7 +108,7 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
     $table1_name = $wpdb->prefix . 'kckevidence_members';
 
     // Determine category based on age and weight
-    $category_id = 1; #determine_category($birth_date, $weight);
+    $category_id = determine_category($birth_date, $weight);
 
     try {
     $wpdb->insert(
@@ -131,6 +130,8 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
     return $memberid;
 }
 
+// Determine category based on age and weight
+# nefunguje věk
 function determine_category($birth_date, $weight) {
     global $wpdb;
 
