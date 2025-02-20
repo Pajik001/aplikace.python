@@ -105,12 +105,11 @@ function kck_enqueue_style() {
 //create new member
 function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
     global $wpdb;
-    console.log('create_member');
 
     $table1_name = $wpdb->prefix . 'kckevidence_members';
 
     // Determine category based on age and weight
-    $category_id = 1; //determine_category($birth_date, $weight);
+    $category_id = 1; #determine_category($birth_date, $weight);
 
     try {
     $wpdb->insert(
@@ -127,10 +126,8 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
         )
     );
     } catch (Exception $e) {
-        console.log($e->getMessage());
     }
     $memberid = $wpdb->insert_id;
-    console.log($memberid);
     return $memberid;
 }
 
