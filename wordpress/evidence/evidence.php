@@ -25,44 +25,87 @@ function kckevidence_create_db() {
         weight int(3) NOT NULL,
         category_id mediumint(9),
         UNIQUE KEY id (id)
+
     ) $charset_collate;";
 
     $table2_name = $wpdb->prefix . 'kckevidence_categories';
     $sql_table_2 = "CREATE TABLE IF NOT EXISTS $table2_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         category_name varchar(50) NOT NULL,
-        age int(3) NOT NULL,
-        weight varchar(50) NOT NULL,
-        UNIQUE KEY id (id)
+        lowage int(3) NOT NULL,
+        maxage int(3) NOT NULL,
+        lowweight int(3) NOT NULL,
+        maxweight int(3) NOT NULL,
+        unique KEY category_id (category_id),
+        UNIQUE KEY age_id (age_id),
+        UNIQUE KEY weight_id (weight_id)
     ) $charset_collate;";
 
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql_table_1);
     dbDelta($sql_table_2);
-
+    
     // Insert predefined categories
     $categories = [
-        ['Chlapci 6-9', '6-9', '-40, +40kg'],
-        ['Dívky 6-9', '6-9', '-33, +33 kg'],
-        ['Chlapci 10-11', '10-11', '-35, -45, +45kg'],
-        ['Dívky 10-11', '10-11', '-30, -40, +40 kg'],
-        ['Chlapci 12-13', '12-13', '-40, -45, -50, -55, +55 kg'],
-        ['Dívky 12-13', '12-13', '-42, -47, -52, +52 kg'],
-        ['Dorostenci 14-15', '14-15', '-52, -57, -63, -70, +70 kg'],
-        ['Dorostenky 14-15', '14-15', '-47, -54, -61, +61 kg'],
-        ['Junioři 16-17', '16-17', '-55, -61, -68, -76, +76 kg'],
-        ['Juniorky 16-17', '16-17', '-48, -53, -59, -66, +66 kg'],
-        ['U21 chlapci 18-20', '18-20', '-60, -67, -75, -84, +84 kg'],
-        ['U21 dívky 18-20', '18-20', '-50, -55, -61, -68, +68 kg']
-    ];
-
+        ['chlapci 6-9 -40kg', '6', '9', '0', '40'],
+        ['chlapci 6-9 +40kg', '6', '9', '40', '100'],
+        ['Dívky 6-9 -33kg', '6', '9', '0', '33'],
+        ['Dívky 6-9 +33kg', '6', '9', '33', '100'],
+        ['Chlapci 10-11 -35kg', '10', '11', '0', '35'],
+        ['Chlapci 10-11 -45kg', '10', '11', '35', '45'],
+        ['Chlapci 10-11 +45kg', '10', '11', '45', '100'],
+        ['Dívky 10-11 -30kg', '10', '11', '0', '30'],
+        ['Dívky 10-11 -40kg', '10', '11', '30', '40'],
+        ['Dívky 10-11 +40kg', '10', '11', '40', '100'],
+        ['Chlapci 12-13 -40kg', '12', '13', '0', '40'],
+        ['Chlapci 12-13 -45kg', '12', '13', '40', '45'],
+        ['Chlapci 12-13 -50kg', '12', '13', '45', '50'],
+        ['Chlapci 12-13 -55kg', '12', '13', '50', '55'],
+        ['Chlapci 12-13 +55kg', '12', '13', '55', '100'],
+        ['Dívky 12-13 -42kg', '12', '13', '0', '42'],
+        ['Dívky 12-13 -47kg', '12', '13', '42', '47'],
+        ['Dívky 12-13 -52kg', '12', '13', '47', '52'],
+        ['Dívky 12-13 +52kg', '12', '13', '52', '100'],
+        ['Dorostenci 14-15 -52kg', '14', '15', '0', '52'],
+        ['Dorostenci 14-15 -57kg', '14', '15', '52', '57'],
+        ['Dorostenci 14-15 -63kg', '14', '15', '57', '63'],
+        ['Dorostenci 14-15 -70kg', '14', '15', '63', '70'],
+        ['Dorostenci 14-15 +70kg', '14', '15', '70', '100'],
+        ['Dorostenky 14-15 -47kg', '14', '15', '0', '47'],
+        ['Dorostenky 14-15 -54kg', '14', '15', '47', '54'],
+        ['Dorostenky 14-15 -61kg', '14', '15', '54', '61'],
+        ['Dorostenky 14-15 +61kg', '14', '15', '61', '100'],
+        ['Junioři 16-17 -55kg', '16', '17', '0', '55'],
+        ['Junioři 16-17 -61kg', '16', '17', '55', '61'],
+        ['Junioři 16-17 -68kg', '16', '17', '61', '68'],
+        ['Junioři 16-17 -76kg', '16', '17', '68', '76'],
+        ['Junioři 16-17 +76kg', '16', '17', '76', '100'],
+        ['Juniorky 16-17 -48kg', '16', '17', '0', '48'],
+        ['Juniorky 16-17 -53kg', '16', '17', '48', '53'],
+        ['Juniorky 16-17 -59kg', '16', '17', '53', '59'],
+        ['Juniorky 16-17 -66kg', '16', '17', '59', '66'],
+        ['Juniorky 16-17 +66kg', '16', '17', '66', '100'],
+        ['U21 chlapci 18-20 -60kg', '18', '20', '0', '60'],
+        ['U21 chlapci 18-20 -67kg', '18', '20', '60', '67'],
+        ['U21 chlapci 18-20 -75kg', '18', '20', '67', '75'],
+        ['U21 chlapci 18-20 -84kg', '18', '20', '75', '84'],
+        ['U21 chlapci 18-20 +84kg', '18', '20', '84', '100'],
+        ['U21 dívky 18-20 -50kg', '18', '20', '0', '50'],
+        ['U21 dívky 18-20 -55kg', '18', '20', '50', '55'],
+        ['U21 dívky 18-20 -61kg', '18', '20', '55', '61'],
+        ['U21 dívky 18-20 -68kg', '18', '20', '61', '68'],
+        ['U21 dívky 18-20 +68kg', '18', '20', '68', '100']
+   ];
+ 
     foreach ($categories as $category) {
         $wpdb->insert(
             $table2_name,
             array(
                 'category_name' => $category[0],
-                'age' => $category[1],
-                'weight' => $category[2]
+                'lowage' => $category[1],
+                'maxage' => $category[2],
+                'lowweight' => $category[3],
+                'maxweight' => $category[4]
             )
         );
     }
@@ -131,7 +174,6 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
 }
 
 // Determine category based on age and weight
-# nefunguje věk
 function determine_category($birth_date, $weight) {
     global $wpdb;
 
@@ -141,21 +183,15 @@ function determine_category($birth_date, $weight) {
     $categories = $wpdb->get_results("SELECT * FROM $table2_name WHERE age >= $age ORDER BY age ASC");
 
     foreach ($categories as $category) {
-        $weights = explode(',', $category->weight);
-        foreach ($weights as $w) {
-            $w = trim($w);
-            if ($w[0] == '-') {
-                if ($weight <= intval(substr($w, 1))) {
-                    return $category->id;
-                }
-            } elseif ($w[0] == '+') {
-                if ($weight >= intval(substr($w, 1))) {
-                    return $category->id; 
-                }
-            }
+        if ($weight >= $category->lowweight && $weight <= $category->maxweight) {
+            return $category->weight_id; 
         }
     }
-
+    foreach ($categories as $category) {
+        if ($age >= $category->lowage && $age <= $category->maxage) {
+            return $category->age_id;
+        }
+    }
     return null;
 }
 
@@ -201,13 +237,15 @@ function create_category($category_name, $age, $weight) {
         $table2_name,
         array(
             'category_name' => $category_name,
-            'age' => $age,
-            'weight' => $weight
+            'lowage' => $lowage,
+            'maxage' => $maxage,
+            'lowweight' => $lowweight,
+            'maxweight' => $maxweight
         )
     );
-    $categoryid = $wpdb->insert_id;
+    $category_id = $wpdb->insert_id;
 
-    return $categoryid;
+    return $category_id;
 }
 
 // create new category via AJAX
