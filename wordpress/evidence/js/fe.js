@@ -1,5 +1,23 @@
 jQuery(document).ready(function() {
     initkckevidence();
+    $('.categoryItem').on('click', function() {
+        var categoryId = $(this).data('category-id');
+        $.ajax({
+            url: ipAjaxVar.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'kck_get_members_by_category',
+                category_id: categoryId
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#membersList').html(response.data.html);
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
 });
 
 function initkckevidence() {

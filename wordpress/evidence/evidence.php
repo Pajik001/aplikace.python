@@ -9,6 +9,7 @@ Description: Zaevidování členů do aplikace a jejich uložení
 register_activation_hook(__FILE__, 'kckevidence_create_db');
 register_uninstall_hook(__FILE__, 'kck_delete_database_tables');
 
+
 //create database 
 function kckevidence_create_db() {
     global $wpdb;
@@ -23,7 +24,6 @@ function kckevidence_create_db() {
         member_phone varchar(20) NOT NULL,
         birth_date date NOT NULL,
         weight int(3) NOT NULL,
-        category_id mediumint(9),
         UNIQUE KEY id (id)
 
     ) $charset_collate;";
@@ -151,7 +151,7 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
     $table1_name = $wpdb->prefix . 'kckevidence_members';
 
     // Determine category based on age and weight
-    $category_id = determine_category($birth_date, $weight);
+    $age = date_diff(date_create($birth_date), date_create('today'))->y;	
 
     try {
     $wpdb->insert(
@@ -164,35 +164,12 @@ function create_member($name, $surname, $email, $phone, $birth_date, $weight) {
             'member_phone' => $phone,
             'birth_date' => $birth_date,
             'weight' => $weight,
-            'category_id' => $category_id
         )
     );
     } catch (Exception $e) {
     }
     $memberid = $wpdb->insert_id;
     return $memberid;
-}
-
-// Determine category based on age and weight
-function determine_category($birth_date, $weight) {
-    global $wpdb;
-
-    $age = date_diff(date_create($birth_date), date_create('today'))->y;
-    $table2_name = $wpdb->prefix . 'kckevidence_categories';
-
-    $categories = $wpdb->get_results("SELECT * FROM $table2_name WHERE age >= $age ORDER BY age ASC");
-
-    foreach ($categories as $category) {
-        if ($weight >= $category->lowweight && $weight <= $category->maxweight) {
-            return $category->weight_id; 
-        }
-    }
-    foreach ($categories as $category) {
-        if ($age >= $category->lowage && $age <= $category->maxage) {
-            return $category->age_id;
-        }
-    }
-    return null;
 }
 
 function get_category_name($category_id) {
@@ -256,7 +233,7 @@ function kck_create_category() {
     $category_name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
     $age = isset($_POST['age']) ? intval($_POST['age']) : 0;
     $weight = isset($_POST['weight']) ? sanitize_text_field($_POST['weight']) : '';
-
+    
     if (!empty($category_name) && !empty($age) && !empty($weight)) {
         $uId = create_category($category_name, $age, $weight);
         if ($uId) {
@@ -298,7 +275,7 @@ class kckevidence_widget extends WP_Widget {
         if (!empty($title))
             echo $args['before_title'] . $title . $args['after_title'];
 
-        //create seats area
+        //Shows members
         echo __('<div id="kckevidence_evidence">', 'kckevidence_widget_domain');
 
         $new_member = new Member();
@@ -316,6 +293,20 @@ class kckevidence_widget extends WP_Widget {
             $objMember = Member::withRow($mem);
             $htmlContent .= $objMember->renderMember();
         }
+        # Potřeba dodělat aby ses seznam kategorií vypisoval a zpřehlednit to tady ↓↓
+        // Shows categories
+        $table2_name = $wpdb->prefix . 'kckevidence_categories';
+
+        $categories = $wpdb->get_results("SELECT * FROM $table2_name");
+
+        $htmlContent .= '<h2>Seznam kategorií</h2>';
+
+        // render categories
+        foreach ($categories as $category) {
+            $htmlContent .= $new_member->renderCategory($category);
+        }
+
+        $htmlContent .= '<div id="membersList"></div>';
 
         echo __($htmlContent, 'kckevidence_widget_domain');
 
@@ -498,11 +489,77 @@ class Member {
         <td> Telefon: %4$s </td>
         <td> Datum narození: %5$s </td>
         <td> Váha: %6$s kg </td>
-        <td> Kategorie: %7$s </td>
         </tr> 
         </table> 
-        </div> ', $this->_first_name, $this->_second_name, $this->_email, $this->_phone, $this->_birth_date, $this->_weight, $category_name);
+        </div> ', $this->_first_name, $this->_second_name, $this->_email, $this->_phone, $this->_birth_date, $this->_weight);
 
         return $html;
     }
+
+    public function renderCategory($category) {
+        $html = '';
+        $html .= sprintf('<div class="categoryItem"> 
+        <table> 
+        <tr>
+        <td> Název kategorie: %1$s </td>
+        <td> Věk: %2$s - %3$s </td>
+        <td> Váha: %4$s - %5$s kg </td>
+        </tr> 
+        </table> 
+        </div>', $category->category_name, $category->lowage, $category->maxage, $category->lowweight, $category->maxweight);
+    
+            return $html;
+        }
+    }
+
+add_action('wp_ajax_nopriv_kck_get_members_by_category', 'kck_get_members_by_category');
+add_action('wp_ajax_kck_get_members_by_category', 'kck_get_members_by_category');
+
+function kck_get_members_by_category() {
+    global $wpdb;
+
+    $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+
+    if ($category_id > 0) {
+        $table1_name = $wpdb->prefix . 'kckevidence_members';
+        $members = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table1_name WHERE category_id = %d", $category_id));
+
+        if ($members) {
+            $html = '<h2>Seznam členů</h2>';
+            foreach ($members as $mem) {
+                $objMember = Member::withRow($mem);
+                $html .= $objMember->renderMember();
+            }
+            wp_send_json_success(array('html' => $html));
+        } else {
+            wp_send_json_error(array('message' => 'No members found for this category.'));
+        }
+    } else {
+        wp_send_json_error(array('message' => 'Invalid category ID.'));
+    }
+    wp_die();
 }
+
+/*
+// Determine category based on age and weight
+function determine_category($birth_date, $weight) {
+    global $wpdb;
+
+    $age = date_diff(date_create($birth_date), date_create('today'))->y;
+    $table2_name = $wpdb->prefix . 'kckevidence_categories';
+
+    $categories = $wpdb->get_results("SELECT * FROM $table2_name WHERE age >= $age ORDER BY age ASC");
+
+    foreach ($categories as $category) {
+        if ($weight >= $category->lowweight && $weight <= $category->maxweight) {
+            return $category->weight_id; 
+        }
+    }
+    foreach ($categories as $category) {
+        if ($age >= $category->lowage && $age <= $category->maxage) {
+            return $category->age_id;
+        }
+    }
+    return null;
+}
+*/
